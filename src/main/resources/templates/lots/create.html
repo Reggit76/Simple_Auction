@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Создание лота</title>
+    <link th:href="@{'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css'}" rel="stylesheet">
+    <link th:href="@{https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css}" rel="stylesheet">
+    <link th:href="@{/css/stylesheet.css}" rel="stylesheet">
+</head>
+<body>
+<!-- Подключение навигационного меню -->
+<div th:replace="~{fragments :: navbar(${user})}"></div>
+
+<!-- Контент -->
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2 class="text-center mb-4">Создание нового лота</h2>
+            <!-- Форма создания лота -->
+            <form th:action="@{/create}" th:object="${lot}" method="post" class="needs-validation" novalidate>
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
+                <div class="mb-3">
+                    <label for="title" class="form-label">Название</label>
+                    <input type="text" class="form-control" id="title" th:field="*{title}" required />
+                    <div class="invalid-feedback">Введите название лота</div>
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Описание</label>
+                    <textarea class="form-control" id="description" th:field="*{description}" rows="3" required></textarea>
+                    <div class="invalid-feedback">Добавьте описание</div>
+                </div>
+                <div class="mb-3">
+                    <label for="startingPrice" class="form-label">Начальная цена</label>
+                    <input type="number" class="form-control" id="startingPrice" th:field="*{startingPrice}" step="0.01" required />
+                    <div class="invalid-feedback">Введите начальную цену</div>
+                </div>
+                <div class="mb-3">
+                    <label for="minBidStep" class="form-label">Минимальный шаг ставки</label>
+                    <input type="number" class="form-control" id="minBidStep" th:field="*{minBidStep}" step="0.01" required />
+                    <div class="invalid-feedback">Укажите минимальный шаг ставки</div>
+                </div>
+                <div class="mb-3">
+                    <label for="endTime" class="form-label">Дата окончания</label>
+                    <input type="datetime-local" class="form-control" id="endTime" th:field="*{endTime}" required />
+                    <div class="invalid-feedback">Укажите дату окончания</div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Создать лот</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Подключение JS -->
+<script th:src="@{'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js'}"></script>
+<script>
+    // Валидация формы
+    (function () {
+        'use strict';
+        var forms = document.querySelectorAll('.needs-validation');
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    form.classList.add('was-validated');
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
+</body>
+</html>

@@ -2,38 +2,57 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <!-- Добавлен обязательный метатег для адаптивности -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Подключение Bootstrap CSS -->
     <link th:href="@{'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css'}"
           rel="stylesheet"
           crossorigin="anonymous">
+
+    <!-- Подключение Font Awesome -->
     <link th:href="@{'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'}"
           rel="stylesheet"
           crossorigin="anonymous">
 </head>
 <body>
-<!-- Navbar fragment -->
+
+<!-- Начало навигационной панели -->
 <div th:fragment="navbar(user)">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container-fluid">
+            <!-- Логотип -->
             <a class="navbar-brand" href="/">Аукционный сайт</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+
+            <!-- Кнопка для мобильных устройств -->
+            <button class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav"
+                    aria-controls="navbarNav"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
+            <!-- Основная часть навигации -->
             <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Левая часть меню -->
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
                         <a class="nav-link" href="/">Главная</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/lots">Лоты</a>
+                        <a class="nav-link" href="/lots">Лоты</a> <!-- Исправлено: /lots/list -> /lots -->
                     </li>
-                    <li class="nav-item" th:if="${user != null and user.isModerator()}">
-                        <a class="nav-link" href="/moderation">Модерация</a>
+                    <li class="nav-item" th:if="${user != null and user.isAdmin()}">
+                        <a class="nav-link" href="/admin">Админ</a>
                     </li>
                 </ul>
 
+                <!-- Правая часть меню -->
                 <ul class="navbar-nav ms-auto">
+                    <!-- Пункты для неавторизованных -->
                     <li class="nav-item" th:if="${user == null}">
                         <a class="nav-link" href="/login">Вход</a>
                     </li>
@@ -41,10 +60,17 @@
                         <a class="nav-link" href="/register">Регистрация</a>
                     </li>
 
+                    <!-- Выпадающее меню пользователя -->
                     <li class="nav-item dropdown" th:if="${user != null}">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user-circle me-1"></i> <span th:text="${user?.name}">Имя</span>
+                        <a class="nav-link dropdown-toggle"
+                           href="#"
+                           role="button"
+                           data-bs-toggle="dropdown"
+                           aria-expanded="false">
+                            <i class="fas fa-user-circle me-1"></i>
+                            <span th:text="${user?.name}">Имя</span>
                         </a>
+                        <!-- Элементы выпадающего меню -->
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="/profile">Профиль</a></li>
                             <li><hr class="dropdown-divider"></li>
@@ -57,7 +83,7 @@
     </nav>
 </div>
 
-<!-- Подключение Bootstrap JS -->
+<!-- Подключение Bootstrap JS + Popper.js -->
 <script th:src="@{'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js'}"
         crossorigin="anonymous"></script>
 

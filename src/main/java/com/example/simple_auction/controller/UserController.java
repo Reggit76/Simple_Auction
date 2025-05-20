@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @Controller
@@ -60,11 +61,12 @@ public class UserController {
 
         User newUser = new User();
         newUser.setEmail(email);
-        newUser.setPassword(password); // Пароль нужно хешировать
+        newUser.setPassword(password); // Пароль будет хеширован в сервисе
         newUser.setName(name);
         newUser.setContactInfo(contactInfo);
         newUser.setAvatarUrl(avatarUrl);
         newUser.setRole("USER");
+        newUser.setBalance(BigDecimal.ZERO); // Устанавливаем баланс по умолчанию
 
         userService.saveUser(newUser);
         return "redirect:/login";
@@ -102,13 +104,13 @@ public class UserController {
         return "redirect:/password-recovery?success=true";
     }
 
-    @GetMapping("/moderation")
-    public String moderationPanel(Model model) {
+    @GetMapping("/admin")
+    public String adminPanel(Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth.isAuthenticated() && auth.getPrincipal() instanceof User user) {
-            if (user.isModerator()) {
+            if (user.isAdmin()) {
                 model.addAttribute("user", user);
-                return "moderation";
+                return "admin";
             } else {
                 return "redirect:/profile?error=access_denied";
             }

@@ -46,3 +46,25 @@
 .btn-show-password:hover {
     background-color: #ced4da;
 }
+
+body {
+    padding-top: 70px; /* Чтобы navbar не перекрывал контент */
+}
+
+.card {
+    transition: all 0.3s;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.badge {
+    font-size: 1rem;
+}
+
+.list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

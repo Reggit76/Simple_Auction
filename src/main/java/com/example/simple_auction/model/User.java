@@ -5,6 +5,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 
@@ -31,6 +32,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String role = "USER"; // Роль по умолчанию
 
+    @Column(nullable = false, precision = 10, scale = 2, columnDefinition = "DECIMAL(10,2) DEFAULT 0.00")
+    private BigDecimal balance;
+
     // Геттеры и сеттеры
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -53,21 +57,18 @@ public class User implements UserDetails {
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
 
+    public BigDecimal getBalance() { return balance; }
+    public void setBalance(BigDecimal balance) { this.balance = balance; }
+
     // === Реализация UserDetails ===
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Возвращаем список ролей в формате Spring Security
         return List.of(new SimpleGrantedAuthority("ROLE_" + role));
     }
 
     @Override
     public String getUsername() {
-        // Используем email как username
         return email;
-    }
-
-    public boolean isModerator() {
-        return "MODERATOR".equals(this.role);
     }
 
     public boolean isAdmin() {
@@ -76,21 +77,21 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // Аккаунт не просрочен
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // Аккаунт не заблокирован
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // Креды не просрочены
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return true; // Аккаунт активен
+        return true;
     }
 }

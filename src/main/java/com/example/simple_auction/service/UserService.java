@@ -7,12 +7,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,11 +31,9 @@ public class UserService implements org.springframework.security.core.userdetail
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
         log.debug("Пользователь найден: {}", email);
-
         return user;
     }
 
-    // === Методы для бизнес-логики ===
     public List<User> getAllUsers() {
         log.info("Запрос на получение всех пользователей");
         return userRepository.findAll();
@@ -59,6 +55,11 @@ public class UserService implements org.springframework.security.core.userdetail
             if (user.getRole() == null || user.getRole().isEmpty()) {
                 user.setRole("USER");
                 log.debug("Роль пользователя установлена по умолчанию: USER");
+            }
+
+            // Устанавливаем баланс по умолчанию, если не задан
+            if (user.getBalance() == null) {
+                user.setBalance(BigDecimal.ZERO);
             }
 
             User savedUser = userRepository.save(user);
