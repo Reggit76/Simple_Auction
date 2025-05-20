@@ -1,51 +1,22 @@
-/* src/main/resources/static/css/stylesheet.css */
-
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
+/* Контейнер */
+.container {
+    margin-top: 100px;
 }
 
-.navbar {
-    background-color: #343a40;
-}
-
-.navbar-brand,
-.nav-link {
+/* Navbar */
+.navbar-brand, .nav-link, .dropdown-item {
     color: white !important;
 }
 
-.nav-link:hover {
+.navbar-brand:hover, .nav-link:hover {
     color: #ffc107 !important;
 }
 
-.container.mt-5 {
-    text-align: center;
+.dropdown-menu {
+    min-width: 150px;
 }
 
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.btn-show-password {
-    background-color: #e9ecef;
-    border: 1px solid #ced4da;
-    transition: all 0.3s;
-}
-
-.btn-show-password:hover {
-    background-color: #ced4da;
-}
-
-.form-control.is-invalid {
-    border-color: #dc3545;
-}
-
-.invalid-feedback {
-    display: block;
-}
-
-/* src/main/resources/static/css/stylesheet.css */
-
+/* Аватар в профиле */
 .profile-avatar {
     width: 150px;
     height: 150px;
@@ -66,11 +37,12 @@ body {
     border-radius: 50%;
 }
 
-.balance {
-    font-weight: bold;
-    margin-top: 20px;
+/* Кнопка показа пароля */
+.btn-show-password {
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    transition: all 0.3s;
 }
-
-.history-table {
-    margin-top: 30px;
+.btn-show-password:hover {
+    background-color: #ced4da;
 }

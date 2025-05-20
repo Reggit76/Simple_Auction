@@ -66,6 +66,14 @@ public class User implements UserDetails {
         return email;
     }
 
+    public boolean isModerator() {
+        return "MODERATOR".equals(this.role);
+    }
+
+    public boolean isAdmin() {
+        return "ADMIN".equals(this.role);
+    }
+
     @Override
     public boolean isAccountNonExpired() {
         return true; // Аккаунт не просрочен

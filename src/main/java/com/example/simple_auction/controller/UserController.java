@@ -2,52 +2,46 @@ package com.example.simple_auction.controller;
 
 import com.example.simple_auction.model.User;
 import com.example.simple_auction.service.UserService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Optional;
 
 @Controller
 public class UserController {
 
-    private static final Logger log = LoggerFactory.getLogger(UserController.class);
-
     @Autowired
     private UserService userService;
 
-    // === Главная ===
     @GetMapping("/")
-    public String showHomePage() {
+    public String showHomePage(Model model) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth.isAuthenticated() && auth.getPrincipal() instanceof User user) {
+            model.addAttribute("user", user);
+        }
         return "index";
     }
 
-    // === Вход ===
     @GetMapping("/login")
-    public String showLoginForm() {
-        log.info("Открытие формы входа");
+    public String showLoginForm(@RequestParam(name = "error", required = false) String error, Model model) {
+        if (error != null) {
+            model.addAttribute("loginError", true);
+        }
         return "login";
     }
 
-    @PostMapping("/login")
-    public String processLogin() {
-        log.info("Обработка входа");
-        return "redirect:/";
-    }
-
-    // === Регистрация ===
     @GetMapping("/register")
-    public String showRegisterForm(Model model) {
-        model.addAttribute("error", false);
-        log.info("Открытие формы регистрации");
+    public String showRegisterForm(@RequestParam(name = "error", required = false) String error, Model model) {
+        if (error != null) {
+            model.addAttribute("registrationError", true);
+        }
         return "register";
     }
 
@@ -58,82 +52,67 @@ public class UserController {
             @RequestParam("name") String name,
             @RequestParam(name = "contactInfo", required = false) String contactInfo,
             @RequestParam(name = "avatarUrl", required = false) String avatarUrl,
-            Model model) {
+            RedirectAttributes redirectAttributes) {
 
-        log.info("Начало обработки регистрации");
-        log.debug("Полученные данные: email={}, passwordLength={}, name={}, contactInfo={}, avatarUrl={}",
-                email, password != null ? password.length() : 0, name, contactInfo, avatarUrl);
-
-        try {
-            // Проверка существования email
-            log.debug("Проверка существования email: {}", email);
-            if (userService.getUserByEmail(email).isPresent()) {
-                log.warn("Email {} уже существует", email);
-                model.addAttribute("error", true);
-                return "register";
-            }
-
-            // Создание нового пользователя
-            User newUser = new User();
-            newUser.setEmail(email);
-            newUser.setPassword(password);
-            newUser.setName(name);
-            newUser.setContactInfo(contactInfo);
-            newUser.setAvatarUrl(avatarUrl);
-            newUser.setRole("USER");
-
-            log.info("Создан пользователь: {}", newUser);
-
-            // Сохранение пользователя
-            userService.saveUser(newUser);
-            log.info("Пользователь {} успешно зарегистрирован", email);
-
-            return "redirect:/login";
-
-        } catch (Exception e) {
-            log.error("Ошибка при регистрации пользователя", e);
-            model.addAttribute("error", true);
-            return "register";
+        if (userService.getUserByEmail(email).isPresent()) {
+            return "redirect:/register?error=email_exists";
         }
+
+        User newUser = new User();
+        newUser.setEmail(email);
+        newUser.setPassword(password); // Пароль нужно хешировать
+        newUser.setName(name);
+        newUser.setContactInfo(contactInfo);
+        newUser.setAvatarUrl(avatarUrl);
+        newUser.setRole("USER");
+
+        userService.saveUser(newUser);
+        return "redirect:/login";
     }
 
-    // === Профиль ===
     @GetMapping("/profile")
     public String showProfileForm(Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
         if (auth.isAuthenticated() && auth.getPrincipal() instanceof User user) {
             model.addAttribute("user", user);
             return "profile";
         }
-
-        return "redirect:/login";
+        return "redirect:/login?error=unauthorized";
     }
 
-    // === Восстановление пароля ===
     @GetMapping("/password-recovery")
-    public String showPasswordRecoveryForm(Model model) {
-        model.addAttribute("error", false);
-        model.addAttribute("success", false);
-        log.info("Открытие страницы восстановления пароля");
+    public String showPasswordRecoveryForm(
+            @RequestParam(name = "error", required = false) String error,
+            @RequestParam(name = "success", required = false) String success,
+            Model model) {
+        model.addAttribute("error", error != null);
+        model.addAttribute("success", success != null);
         return "password-recovery";
     }
 
     @PostMapping("/password-recovery")
     public String processPasswordRecovery(
             @RequestParam("email") String email,
-            Model model) {
-
-        log.info("Попытка восстановления пароля для: {}", email);
-
+            RedirectAttributes redirectAttributes) {
         Optional<User> userOpt = userService.getUserByEmail(email);
         if (userOpt.isEmpty()) {
-            model.addAttribute("error", true);
-            return "password-recovery";
+            return "redirect:/password-recovery?error=true";
         }
+        // Логика отправки ссылки на восстановление
+        return "redirect:/password-recovery?success=true";
+    }
 
-        // Здесь можно реализовать отправку ссылки на восстановление пароля
-        model.addAttribute("success", true);
-        return "password-recovery";
+    @GetMapping("/moderation")
+    public String moderationPanel(Model model) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth.isAuthenticated() && auth.getPrincipal() instanceof User user) {
+            if (user.isModerator()) {
+                model.addAttribute("user", user);
+                return "moderation";
+            } else {
+                return "redirect:/profile?error=access_denied";
+            }
+        }
+        return "redirect:/login?error=unauthorized";
     }
 }

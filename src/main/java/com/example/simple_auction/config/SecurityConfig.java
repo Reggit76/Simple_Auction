@@ -34,11 +34,14 @@ public class SecurityConfig {
                                 "/register",
                                 "/index",
                                 "/password-recovery",
+                                "/fragmental",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**"
                         ).permitAll()
                         .requestMatchers("/lots", "/profile").authenticated()
+                        .requestMatchers("/moderation").hasRole("MODERATOR")
+                        .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
@@ -51,8 +54,7 @@ public class SecurityConfig {
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
-                )
-                .authenticationManager(authenticationManager());
+                );
         return http.build();
     }
 
