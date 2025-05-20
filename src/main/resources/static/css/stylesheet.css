@@ -1,0 +1,76 @@
+/* src/main/resources/static/css/stylesheet.css */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.navbar {
+    background-color: #343a40;
+}
+
+.navbar-brand,
+.nav-link {
+    color: white !important;
+}
+
+.nav-link:hover {
+    color: #ffc107 !important;
+}
+
+.container.mt-5 {
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.btn-show-password {
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    transition: all 0.3s;
+}
+
+.btn-show-password:hover {
+    background-color: #ced4da;
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+.invalid-feedback {
+    display: block;
+}
+
+/* src/main/resources/static/css/stylesheet.css */
+
+.profile-avatar {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 20px;
+}
+
+.default-avatar {
+    background-color: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 50px;
+    color: #6c757d;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+}
+
+.balance {
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+.history-table {
+    margin-top: 30px;
+}
