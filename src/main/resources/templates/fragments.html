@@ -5,15 +5,9 @@
     <!-- Добавлен обязательный метатег для адаптивности -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Подключение Bootstrap CSS -->
-    <link th:href="@{'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css'}"
-          rel="stylesheet"
-          crossorigin="anonymous">
-
-    <!-- Подключение Font Awesome -->
-    <link th:href="@{'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'}"
-          rel="stylesheet"
-          crossorigin="anonymous">
+    <link th:href="@{'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css'}" rel="stylesheet">
+    <link th:href="@{https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css}" rel="stylesheet">
+    <link th:href="@{/css/stylesheet.css}" rel="stylesheet">
 </head>
 <body>
 
@@ -43,7 +37,7 @@
                         <a class="nav-link" href="/">Главная</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/lots">Лоты</a> <!-- Исправлено: /lots/list -> /lots -->
+                        <a class="nav-link" href="/lots">Лоты</a>
                     </li>
                     <li class="nav-item" th:if="${user != null and user.isAdmin()}">
                         <a class="nav-link" href="/admin">Админ</a>
@@ -74,7 +68,14 @@
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="/profile">Профиль</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/logout">Выход</a></li>
+                            <!-- Ссылка для выхода с обработкой через JS -->
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="logout()">Выход</a>
+                                <!-- Форма для POST-запроса -->
+                                <form th:action="@{/logout}" method="post" id="logoutForm" class="d-none">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                </form>
+                            </li>
                         </ul>
                     </li>
                 </ul>
@@ -86,6 +87,10 @@
 <!-- Подключение Bootstrap JS + Popper.js -->
 <script th:src="@{'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js'}"
         crossorigin="anonymous"></script>
-
+<script>
+    function logout() {
+        document.getElementById('logoutForm').submit();
+    }
+</script>
 </body>
 </html>

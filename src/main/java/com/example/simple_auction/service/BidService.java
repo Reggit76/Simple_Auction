@@ -2,7 +2,6 @@ package com.example.simple_auction.service;
 
 import com.example.simple_auction.model.Bid;
 import com.example.simple_auction.model.Lot;
-import com.example.simple_auction.model.LotStatus;
 import com.example.simple_auction.model.User;
 import com.example.simple_auction.repository.BidRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,22 +38,18 @@ public class BidService {
 
     public void placeBid(Integer lotId, BigDecimal bidAmount, User bidder) {
         Lot lot = lotService.getLotById(lotId);
-        if (lot == null || LotStatus.CANCELLED.equals(lot.getStatus()) || LotStatus.SOLD.equals(lot.getStatus())) {
-            throw new IllegalStateException("Cannot place a bid on this lot");
+        if (lot == null) {
+            throw new IllegalArgumentException("Lot not found");
         }
-
-        if (bidder.getBalance().compareTo(bidAmount) < 0) {
-            throw new IllegalStateException("Insufficient funds to place bid");
+        if (!"ACTIVE".equals(lot.getStatus())) {
+            throw new IllegalStateException("Cannot place a bid on an inactive lot");
         }
-
-        BigDecimal minRequiredBid;
-        if (lot.getCurrentBid() == null) {
-            minRequiredBid = lot.getStartingPrice();
-        } else {
-            minRequiredBid = lot.getCurrentBid().add(lot.getMinBidStep());
-        }
+        BigDecimal minRequiredBid = (lot.getCurrentBid() != null) ? lot.getCurrentBid().add(lot.getMinBidStep()) : lot.getStartingPrice();
         if (bidAmount.compareTo(minRequiredBid) < 0) {
             throw new IllegalStateException("Bid must be at least " + minRequiredBid);
+        }
+        if (bidder.getBalance().compareTo(bidAmount) < 0) {
+            throw new IllegalStateException("Insufficient funds to place bid");
         }
 
         Bid bid = new Bid();
@@ -70,5 +65,10 @@ public class BidService {
 
     public List<Bid> getBidsByLot(Integer lotId) {
         return bidRepository.findByLotId(lotId);
+    }
+
+    public User findHighestBidder(Integer lotId) {
+        Bid highestBid = bidRepository.findTopByLotIdOrderByBidAmountDesc(lotId);
+        return highestBid != null ? highestBid.getUser() : null;
     }
 }

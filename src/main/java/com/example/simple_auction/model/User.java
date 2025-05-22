@@ -35,6 +35,9 @@ public class User implements UserDetails {
     @Column(nullable = false, precision = 10, scale = 2, columnDefinition = "DECIMAL(10,2) DEFAULT 0.00")
     private BigDecimal balance;
 
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean isBlocked = false;
+
     // Геттеры и сеттеры
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -60,7 +63,10 @@ public class User implements UserDetails {
     public BigDecimal getBalance() { return balance; }
     public void setBalance(BigDecimal balance) { this.balance = balance; }
 
-    // === Реализация UserDetails ===
+    public boolean isBlocked() { return isBlocked; }
+    public void setBlocked(boolean blocked) { this.isBlocked = blocked; }
+
+    // Реализация UserDetails
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role));

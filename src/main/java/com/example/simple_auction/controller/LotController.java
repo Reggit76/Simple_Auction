@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +48,6 @@ public class LotController {
             model.addAttribute("lots", lots);
             model.addAttribute("error", error);
 
-            // Передаем объект User в модель
             if (authentication != null && authentication.isAuthenticated()) {
                 User user = (User) authentication.getPrincipal();
                 model.addAttribute("user", user);
@@ -78,10 +76,13 @@ public class LotController {
                 return "redirect:/lots?error=notfound";
             }
 
+            lotService.finalizeAuction(id);
+            lot = lotService.getLotById(id);
+
             model.addAttribute("lot", lot);
             model.addAttribute("bids", bidService.getBidsByLot(id));
+            model.addAttribute("comments", lotService.getCommentsByLot(id));
 
-            // Передаем объект User в модель
             if (authentication != null && authentication.isAuthenticated()) {
                 User user = (User) authentication.getPrincipal();
                 model.addAttribute("user", user);
@@ -104,7 +105,6 @@ public class LotController {
         log.info("Открытие формы создания лота");
         model.addAttribute("lot", new Lot());
 
-        // Передаем объект User в модель
         if (authentication != null && authentication.isAuthenticated()) {
             User user = (User) authentication.getPrincipal();
             model.addAttribute("user", user);
@@ -140,6 +140,73 @@ public class LotController {
         }
     }
 
+    @GetMapping("/{id}/edit")
+    public String showEditForm(
+            @PathVariable Integer id,
+            Model model,
+            Authentication authentication
+    ) {
+        log.info("Открытие формы редактирования лота с ID: {}", id);
+
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                log.warn("Попытка редактирования лота без аутентификации");
+                return "redirect:/login";
+            }
+
+            User user = (User) authentication.getPrincipal();
+            Lot lot = lotService.getLotById(id);
+            if (lot == null) {
+                log.warn("Лот с ID {} не найден", id);
+                return "redirect:/lots?error=notfound";
+            }
+
+            if (!user.isAdmin() && !lot.getOwner().getId().equals(user.getId())) {
+                log.warn("Пользователь {} не имеет прав на редактирование лота {}", user.getEmail(), id);
+                return "redirect:/lots?error=permission";
+            }
+
+            model.addAttribute("lot", lot);
+            model.addAttribute("user", user);
+            return "lots/edit";
+
+        } catch (Exception e) {
+            log.error("Ошибка при открытии формы редактирования лота с ID {}", id, e);
+            return "redirect:/lots?error=internal";
+        }
+    }
+
+    @PostMapping("/{id}/edit")
+    public String editLot(
+            @PathVariable Integer id,
+            @ModelAttribute Lot lot,
+            Authentication authentication
+    ) {
+        log.info("Редактирование лота с ID: {}", id);
+
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                log.warn("Попытка редактирования лота без аутентификации");
+                return "redirect:/login";
+            }
+
+            User user = (User) authentication.getPrincipal();
+            lotService.updateLot(id, lot, user);
+            log.info("Лот {} успешно отредактирован пользователем {}", id, user.getEmail());
+            return "redirect:/lots/" + id;
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Ошибка при редактировании лота {}: {}", id, e.getMessage());
+            return "redirect:/lots/" + id + "?error=notfound";
+        } catch (SecurityException e) {
+            log.warn("Ошибка при редактировании лота {}: {}", id, e.getMessage());
+            return "redirect:/lots/" + id + "?error=permission";
+        } catch (Exception e) {
+            log.error("Ошибка при редактировании лота {}", id, e);
+            return "redirect:/lots/" + id + "?error=internal";
+        }
+    }
+
     @PostMapping("/{id}/bid")
     public String placeBid(
             @PathVariable Integer id,
@@ -163,7 +230,7 @@ public class LotController {
             return "redirect:/lots/" + id;
 
         } catch (IllegalStateException e) {
-            log.warn("Ошибка при ставке на лот {}", id, e);
+            log.warn("Ошибка при ставке на лот {}: {}", id, e.getMessage());
             return "redirect:/lots/" + id + "?error=invalid_bid";
         } catch (Exception e) {
             log.error("Ошибка при обработке ставки", e);
@@ -199,7 +266,6 @@ public class LotController {
     }
 
     @PostMapping("/{id}/delete")
-    @PreAuthorize("hasRole('ADMIN')")
     public String deleteLot(
             @PathVariable Integer id,
             Authentication authentication
@@ -207,11 +273,25 @@ public class LotController {
         log.info("Удаление лота с ID: {}", id);
 
         try {
-            User admin = (User) authentication.getPrincipal();
-            log.debug("Администратор '{}' удаляет лот ID: {}", admin.getEmail(), id);
+            if (authentication == null || !authentication.isAuthenticated()) {
+                log.warn("Неавторизованный пользователь пытается удалить лот");
+                return "redirect:/login";
+            }
 
-            lotService.deleteLot(id, admin);
-            log.info("Лот {} удален", id);
+            User user = (User) authentication.getPrincipal();
+            Lot lot = lotService.getLotById(id);
+            if (lot == null) {
+                log.warn("Лот с ID {} не найден", id);
+                return "redirect:/lots?error=notfound";
+            }
+
+            if (!user.isAdmin() && !lot.getOwner().getId().equals(user.getId())) {
+                log.warn("Пользователь {} не имеет прав на удаление лота {}", user.getEmail(), id);
+                return "redirect:/lots?error=permission";
+            }
+
+            lotService.deleteLot(id, user);
+            log.info("Лот {} удален пользователем {}", id, user.getEmail());
             return "redirect:/lots";
 
         } catch (Exception e) {
@@ -240,5 +320,11 @@ public class LotController {
             log.error("Ошибка при отмене аукциона {}", id, e);
             return "redirect:/lots?error=cancel";
         }
+    }
+
+    @GetMapping("/data")
+    @ResponseBody
+    public List<Lot> getLotsData() {
+        return lotService.getActiveLots();
     }
 }

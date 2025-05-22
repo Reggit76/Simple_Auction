@@ -1,6 +1,8 @@
 package com.example.simple_auction.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Type;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -33,9 +35,12 @@ public class Lot {
     @Column(nullable = false)
     private LocalDateTime endTime;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "LotStatus DEFAULT 'ACTIVE'")
-    private LotStatus status = LotStatus.ACTIVE;
+    @Column(name = "lotstatus", nullable = false, columnDefinition = "VARCHAR(32) DEFAULT 'ACTIVE'")
+    private String status;
+
+    @ManyToOne
+    @JoinColumn(name = "WinnerId")
+    private User winner;
 
     // Геттеры и сеттеры
     public Integer getId() { return id; }
@@ -56,6 +61,8 @@ public class Lot {
     public void setMinBidStep(BigDecimal minBidStep) { this.minBidStep = minBidStep; }
     public LocalDateTime getEndTime() { return endTime; }
     public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
-    public LotStatus getStatus() { return status; }
-    public void setStatus(LotStatus status) { this.status = status; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public User getWinner() { return winner; }
+    public void setWinner(User winner) { this.winner = winner; }
 }

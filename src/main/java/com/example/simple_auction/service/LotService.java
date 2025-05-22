@@ -1,9 +1,10 @@
 package com.example.simple_auction.service;
 
+import com.example.simple_auction.model.Bid;
 import com.example.simple_auction.model.Comment;
 import com.example.simple_auction.model.Lot;
-import com.example.simple_auction.model.LotStatus;
 import com.example.simple_auction.model.User;
+import com.example.simple_auction.repository.BidRepository;
 import com.example.simple_auction.repository.CommentRepository;
 import com.example.simple_auction.repository.LotRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class LotService {
     @Autowired
     private CommentRepository commentRepository;
 
+    @Autowired
+    private BidRepository bidRepository;
+
     public List<Lot> getAllLots() {
         return lotRepository.findAll();
     }
@@ -31,7 +35,44 @@ public class LotService {
     }
 
     public Lot saveLot(Lot lot, User creator) {
-        lot.setOwner(creator);
+        if (lot.getId() == null) { // Новый лот
+            if (lot.getTitle() == null || lot.getStartingPrice() == null || lot.getMinBidStep() == null || lot.getEndTime() == null) {
+                throw new IllegalArgumentException("Все обязательные поля должны быть заполнены");
+            }
+            lot.setOwner(creator); // Устанавливаем владельца только для нового лота
+            lot.setStatus("ACTIVE");
+        } else { // Существующий лот
+            Lot existingLot = lotRepository.findById(lot.getId()).orElse(null);
+            if (existingLot != null) {
+                // Обновляем только необходимые поля, сохраняя существующего владельца
+                existingLot.setTitle(lot.getTitle());
+                existingLot.setDescription(lot.getDescription());
+                existingLot.setImageURL(lot.getImageURL());
+                existingLot.setStartingPrice(lot.getStartingPrice());
+                existingLot.setMinBidStep(lot.getMinBidStep());
+                existingLot.setEndTime(lot.getEndTime());
+                existingLot.setStatus(lot.getStatus());
+                existingLot.setWinner(lot.getWinner());
+                lot = existingLot; // Используем существующий объект с неизменным owner
+            }
+        }
+        return lotRepository.save(lot);
+    }
+
+    public Lot updateLot(Integer id, Lot updatedLot, User user) {
+        Lot lot = getLotById(id);
+        if (lot == null) {
+            throw new IllegalArgumentException("Лот с ID " + id + " не найден");
+        }
+        if (!user.isAdmin() && !lot.getOwner().getId().equals(user.getId())) {
+            throw new SecurityException("У вас нет прав для редактирования этого лота");
+        }
+        lot.setTitle(updatedLot.getTitle());
+        lot.setDescription(updatedLot.getDescription());
+        lot.setImageURL(updatedLot.getImageURL());
+        lot.setStartingPrice(updatedLot.getStartingPrice());
+        lot.setMinBidStep(updatedLot.getMinBidStep());
+        lot.setEndTime(updatedLot.getEndTime());
         return lotRepository.save(lot);
     }
 
@@ -44,7 +85,7 @@ public class LotService {
 
     public List<Lot> getActiveLots() {
         return lotRepository.findAll().stream()
-                .filter(lot -> lot.getEndTime().isAfter(LocalDateTime.now()))
+                .filter(lot -> lot.getEndTime().isAfter(LocalDateTime.now()) && lot.getStatus().equals("ACTIVE"))
                 .collect(Collectors.toList());
     }
 
@@ -61,7 +102,7 @@ public class LotService {
         }
         Lot lot = getLotById(lotId);
         if (lot != null) {
-            lot.setStatus(LotStatus.CANCELLED);
+            lot.setStatus("CANCELLED");
             lotRepository.save(lot);
         }
     }
@@ -75,6 +116,24 @@ public class LotService {
             comment.setText(commentText);
             comment.setTimestamp(LocalDateTime.now());
             commentRepository.save(comment);
+        }
+    }
+
+    public List<Comment> getCommentsByLot(Integer lotId) {
+        return commentRepository.findByLotId(lotId);
+    }
+
+    public void finalizeAuction(Integer lotId) {
+        Lot lot = getLotById(lotId);
+        if (lot != null && lot.getEndTime().isBefore(LocalDateTime.now()) && lot.getStatus().equals("ACTIVE")) {
+            Bid highestBid = bidRepository.findTopByLotIdOrderByBidAmountDesc(lotId);
+            if (highestBid != null) {
+                lot.setWinner(highestBid.getUser());
+                lot.setStatus("SOLD");
+            } else {
+                lot.setStatus("EXPIRED");
+            }
+            lotRepository.save(lot);
         }
     }
 }
